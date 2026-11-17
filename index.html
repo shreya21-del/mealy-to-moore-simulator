@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mealy to Moore Machine Converter | Interactive Automata Studio</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">⚙️</div>
+        <div class="brand-text">
+          <span class="brand-title">Mealy <span class="arrow-accent">➔</span> Moore</span>
+          <span class="brand-tag">Converter Studio</span>
+        </div>
+      </div>
+
+      <div class="nav-controls">
+        <div class="preset-selector-group">
+          <label for="presetSelect" class="sr-only">Load Preset Example</label>
+          <select id="presetSelect" class="select-input preset-dropdown">
+            <option value="prompt">Preset 1: Prompt Standard (2 States)</option>
+            <option value="splitting">Preset 2: Textbook State Splitting (3 States)</option>
+            <option value="detector101">Preset 3: '101' Sequence Detector</option>
+            <option value="parity">Preset 4: Parity Generator (Even/Odd)</option>
+            <option value="edge">Preset 5: Signal Edge Detector</option>
+          </select>
+          <button id="btnLoadPreset" class="btn btn-secondary btn-sm" title="Load selected preset">
+            <span>📥 Load</span>
+          </button>
+        </div>
+
+        <button id="btnReset" class="btn btn-ghost btn-sm" title="Reset to default example">
+          <span>🔄 Reset</span>
+        </button>
+
+        <button id="btnToggleTheme" class="btn btn-icon" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
+          <span class="theme-icon" id="themeIcon">☀️</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="main-container">
+    <!-- Hero Banner with Educational Quick Access -->
+    <section class="hero-banner">
+      <div class="hero-content">
+        <div class="badge-pill">⚡ Automata & Digital Logic Studio</div>
+        <h1 class="hero-heading">Mealy to Moore Machine Converter</h1>
+        <p class="hero-description">
+          An interactive, mathematically accurate converter that maps transition-dependent Mealy outputs 
+          into state-dependent Moore outputs via formal state-splitting and initial state resolution.
+        </p>
+      </div>
+      <div class="hero-actions">
+        <button id="btnTheoryModal" class="btn btn-glass">
+          <span>📖 Learn Theory & Definitions</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Two-Column Interactive Workspace -->
+    <div class="workspace-grid">
+      <!-- Left Column: Machine Builder (Input Section) -->
+      <section class="panel panel-input">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <span class="panel-icon">🛠️</span>
+            <div>
+              <h2 class="panel-title">1. Define Mealy Machine</h2>
+              <p class="panel-subtitle">Configure states, input alphabet, initial state, and transitions</p>
+            </div>
+          </div>
+          <div id="validationBadge" class="status-badge status-valid">
+            <span>● All Transitions Complete</span>
+          </div>
+        </div>
+
+        <!-- Configuration Inputs -->
+        <div class="config-grid">
+          <!-- States Config -->
+          <div class="config-card">
+            <label class="config-label" for="inputStates">
+              <span>States (comma-separated)</span>
+              <span class="help-tooltip" title="List of state names, e.g., A, B or q0, q1, q2">ⓘ</span>
+            </label>
+            <input type="text" id="inputStates" class="text-input" value="A, B" placeholder="A, B">
+            <div id="statesPillContainer" class="pills-container"></div>
+          </div>
+
+          <!-- Inputs Config -->
+          <div class="config-card">
+            <label class="config-label" for="inputAlphabet">
+              <span>Input Alphabet (Σ)</span>
+              <span class="help-tooltip" title="Valid input symbols, e.g., 0, 1">ⓘ</span>
+            </label>
+            <input type="text" id="inputAlphabet" class="text-input" value="0, 1" placeholder="0, 1">
+            <div id="inputsPillContainer" class="pills-container"></div>
+          </div>
+
+          <!-- Initial State Config -->
+          <div class="config-card">
+            <label class="config-label" for="selectInitialState">
+              <span>Initial State (q₀)</span>
+              <span class="help-tooltip" title="State the machine powers on into">ⓘ</span>
+            </label>
+            <select id="selectInitialState" class="select-input"></select>
+          </div>
+        </div>
+
+        <!-- Conversion Policy Dropdown -->
+        <div class="policy-card">
+          <div class="policy-header">
+            <span class="policy-title">⚙️ Initial State Resolution Policy</span>
+          </div>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="startPolicy" value="auto" checked>
+              <span class="radio-custom"></span>
+              <span class="radio-text">
+                <strong>Standard Automata (Recommended):</strong> Add dedicated start state <code>q0_start</code> if initial state has incoming edges.
+              </span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="startPolicy" value="always_start">
+              <span class="radio-custom"></span>
+              <span class="radio-text">
+                <strong>Always Start State:</strong> Always create <code>q0_start</code> with initial output <code>-</code>.
+              </span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="startPolicy" value="compact">
+              <span class="radio-custom"></span>
+              <span class="radio-text">
+                <strong>Compact Academic:</strong> Reuse existing split state directly without extra start state.
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Transition Table Section -->
+        <div class="table-container-header">
+          <div>
+            <h3 class="section-title">Transition Table (δ and λ)</h3>
+            <p class="section-subtitle">Present State × Input ➔ Next State and Output</p>
+          </div>
+          <div class="table-actions">
+            <button id="btnAutoFill" class="btn btn-secondary btn-xs" title="Generate all (State, Input) combinations">
+              <span>⚡ Auto-Fill All</span>
+            </button>
+            <button id="btnAddRow" class="btn btn-secondary btn-xs" title="Add single transition row">
+              <span>➕ Add Row</span>
+            </button>
+            <button id="btnClearRows" class="btn btn-ghost btn-xs" title="Clear table">
+              <span>🗑️ Clear</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="modern-table" id="mealyInputTable">
+            <thead>
+              <tr>
+                <th style="width: 25%;">Present State</th>
+                <th style="width: 20%;">Input (a)</th>
+                <th style="width: 25%;">Next State (δ)</th>
+                <th style="width: 20%;">Output (λ)</th>
+                <th style="width: 10%;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="mealyTableBody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Convert Button -->
+        <div class="convert-bar">
+          <button id="btnConvert" class="btn btn-primary btn-lg btn-convert">
+            <span>🚀 Convert to Moore Machine</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Column: Results & Visualizer -->
+      <section class="panel panel-results" id="resultsSection">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <span class="panel-icon">📊</span>
+            <div>
+              <h2 class="panel-title">2. Conversion Results & Diagrams</h2>
+              <p class="panel-subtitle">Explore the resulting Moore Machine, state diagrams, and simulation</p>
+            </div>
+          </div>
+          <div class="export-actions">
+            <button id="btnDownloadMealyCsv" class="btn btn-ghost btn-xs" title="Download Mealy Table CSV">
+              <span>📥 Mealy CSV</span>
+            </button>
+            <button id="btnDownloadMooreCsv" class="btn btn-ghost btn-xs" title="Download Moore Table CSV">
+              <span>📥 Moore CSV</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Metrics Cards Row -->
+        <div class="metrics-row">
+          <div class="metric-card">
+            <span class="metric-label">Mealy States</span>
+            <span class="metric-value" id="valMealyStates">2</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Moore States</span>
+            <div class="metric-val-group">
+              <span class="metric-value text-accent" id="valMooreStates">3</span>
+              <span class="metric-delta" id="valDeltaStates">+1</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Mealy Initial</span>
+            <span class="metric-value" id="valMealyInit">A</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Moore Initial</span>
+            <span class="metric-value text-success" id="valMooreInit">A_start</span>
+          </div>
+        </div>
+
+        <!-- Sub Tabs Navigation -->
+        <div class="tab-nav" role="tablist">
+          <button class="tab-btn active" data-tab="tabDiagrams">📈 State Diagrams</button>
+          <button class="tab-btn" data-tab="tabMooreTable">📋 Moore Table</button>
+          <button class="tab-btn" data-tab="tabSplitting">🔀 State Splitting</button>
+          <button class="tab-btn" data-tab="tabSteps">📘 Step-by-Step</button>
+          <button class="tab-btn" data-tab="tabSimulator">🧪 Simulator</button>
+        </div>
+
+        <!-- TAB 1: STATE DIAGRAMS -->
+        <div class="tab-pane active" id="tabDiagrams">
+          <div class="diagram-controls-bar">
+            <div class="diagram-toolbar-item">
+              <label for="diagramLayout">Layout:</label>
+              <select id="diagramLayout" class="select-input select-xs">
+                <option value="LR">Left to Right (LR)</option>
+                <option value="TB">Top to Bottom (TB)</option>
+              </select>
+            </div>
+            <div class="diagram-export-group">
+              <button id="btnDownloadMealySvg" class="btn btn-secondary btn-xs">Download Mealy SVG</button>
+              <button id="btnDownloadMooreSvg" class="btn btn-secondary btn-xs">Download Moore SVG</button>
+              <button id="btnDownloadDot" class="btn btn-ghost btn-xs">Download DOT</button>
+            </div>
+          </div>
+
+          <div class="diagrams-grid">
+            <!-- Mealy State Diagram -->
+            <div class="diagram-card">
+              <div class="diagram-card-header">
+                <span class="diagram-card-title">🔵 Original Mealy Machine</span>
+                <span class="diagram-caption">Transitions labeled as <code>Input / Output</code></span>
+              </div>
+              <div class="svg-viewport" id="mealySvgContainer">
+                <!-- Native interactive SVG inserted here -->
+              </div>
+            </div>
+
+            <!-- Moore State Diagram -->
+            <div class="diagram-card">
+              <div class="diagram-card-header">
+                <span class="diagram-card-title">🟢 Equivalent Moore Machine</span>
+                <span class="diagram-caption">Outputs inside state: <code>[y = Output]</code></span>
+              </div>
+              <div class="svg-viewport" id="mooreSvgContainer">
+                <!-- Native interactive SVG inserted here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 2: MOORE TABLE -->
+        <div class="tab-pane" id="tabMooreTable">
+          <div class="results-table-header">
+            <h4 class="subheading">Final Moore Transition Table</h4>
+            <span class="tag-pill">State-Dependent Outputs</span>
+          </div>
+          <div class="table-responsive">
+            <table class="modern-table" id="mooreResultsTable">
+              <thead>
+                <!-- Dynamic columns based on inputs -->
+              </thead>
+              <tbody id="mooreTableBody">
+                <!-- Dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: STATE SPLITTING -->
+        <div class="tab-pane" id="tabSplitting">
+          <div class="results-table-header">
+            <h4 class="subheading">State Splitting Justification</h4>
+            <span class="tag-pill">Conflict Resolution</span>
+          </div>
+          <p class="tab-hint">
+            A state is split into multiple Moore states if it receives transitions carrying different output values.
+          </p>
+          <div class="table-responsive">
+            <table class="modern-table" id="splittingTable">
+              <thead>
+                <tr>
+                  <th>Original State</th>
+                  <th>Incoming Outputs</th>
+                  <th>Split Count</th>
+                  <th>Action Taken</th>
+                  <th>Generated Moore States</th>
+                </tr>
+              </thead>
+              <tbody id="splittingTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 4: STEP-BY-STEP EXPLANATION -->
+        <div class="tab-pane" id="tabSteps">
+          <div class="steps-timeline" id="stepsTimeline">
+            <!-- Dynamic step cards populated via JS -->
+          </div>
+        </div>
+
+        <!-- TAB 5: INTERACTIVE STRING SIMULATOR -->
+        <div class="tab-pane" id="tabSimulator">
+          <div class="sim-header">
+            <h4 class="subheading">Synchronous Execution Simulator</h4>
+            <p class="tab-hint">Run an input string through both machines to observe output equivalence.</p>
+          </div>
+
+          <div class="sim-input-bar">
+            <div class="sim-input-group">
+              <label for="simInputString" class="sr-only">Input String</label>
+              <input type="text" id="simInputString" class="text-input sim-field" value="01011" placeholder="Enter sequence (e.g., 01011)">
+            </div>
+            <div class="sim-buttons">
+              <button id="btnSimStep" class="btn btn-secondary btn-sm" title="Execute single input step">⏭ Step</button>
+              <button id="btnSimPlay" class="btn btn-secondary btn-sm" title="Auto play transitions">▶ Play</button>
+              <button id="btnSimRunAll" class="btn btn-primary btn-sm" title="Execute complete string">⚡ Run All</button>
+              <button id="btnSimReset" class="btn btn-ghost btn-sm" title="Reset simulator">↺ Reset</button>
+            </div>
+          </div>
+
+          <div id="simEquivalenceBanner" class="equivalence-banner">
+            <!-- Populated via JS -->
+          </div>
+
+          <div class="sim-comparison-cards">
+            <div class="sim-card">
+              <span class="sim-card-title">🔵 Mealy Output Sequence</span>
+              <div class="sim-seq" id="simMealySeq">00111</div>
+              <span class="sim-meta" id="simMealyMeta">Length: 5</span>
+            </div>
+            <div class="sim-card">
+              <span class="sim-card-title">🟢 Moore Output Sequence</span>
+              <div class="sim-seq" id="simMooreSeq">-00111</div>
+              <span class="sim-meta" id="simMooreMeta">Length: 6 (Initial: -)</span>
+            </div>
+            <div class="sim-card">
+              <span class="sim-card-title">🔍 Moore Trimmed (t &gt; 0)</span>
+              <div class="sim-seq text-success" id="simMooreTrimmed">00111</div>
+              <span class="sim-meta" id="simMatchStatus">Matches Mealy: ✅ True</span>
+            </div>
+          </div>
+
+          <div class="table-responsive sim-trace-table-wrap">
+            <table class="modern-table sim-table" id="simTraceTable">
+              <thead>
+                <tr>
+                  <th>Step</th>
+                  <th>Input</th>
+                  <th>Mealy State</th>
+                  <th>Mealy Output</th>
+                  <th>Mealy Next</th>
+                  <th>Moore State</th>
+                  <th>Moore Output</th>
+                  <th>Moore Next</th>
+                </tr>
+              </thead>
+              <tbody id="simTraceTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Theory Modal -->
+  <div class="modal-overlay" id="theoryModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">📖 Automata Theory: Mealy vs Moore Machines</h3>
+        <button id="btnCloseModal" class="btn-close" aria-label="Close modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="theory-grid">
+          <div class="theory-box mealy-box">
+            <h4>🔵 Mealy Machine</h4>
+            <p>A finite-state machine whose output values are determined both by its current state and current inputs.</p>
+            <ul>
+              <li><strong>6-tuple:</strong> (Q, Σ, Δ, δ, λ, q₀)</li>
+              <li><strong>Output Function:</strong> λ: Q × Σ ➔ Δ</li>
+              <li><strong>Transitions:</strong> Edge labeled with <code>Input / Output</code></li>
+              <li><strong>State Count:</strong> Often minimal states</li>
+              <li><strong>Timing:</strong> Immediate output response</li>
+            </ul>
+          </div>
+          <div class="theory-box moore-box">
+            <h4>🟢 Moore Machine</h4>
+            <p>A finite-state machine whose output values are determined solely by its current state.</p>
+            <ul>
+              <li><strong>6-tuple:</strong> (Q, Σ, Δ, δ, λ', q₀)</li>
+              <li><strong>Output Function:</strong> λ': Q ➔ Δ</li>
+              <li><strong>Transitions:</strong> Output inside state circle; edges carry only <code>Input</code></li>
+              <li><strong>State Count:</strong> May require state splitting</li>
+              <li><strong>Timing:</strong> Glitch-free, synchronized output</li>
+            </ul>
+          </div>
+        </div>
+        <div class="theory-note">
+          <strong>The Initial Output Difference ($t = 0$):</strong><br>
+          For any input word $w = a_1 a_2 \dots a_k$:
+          Mealy produces $y_1 y_2 \dots y_k$ (length $k$).
+          Moore emits an output upon machine start, producing $y_0 y_1 y_2 \dots y_k$ (length $k+1$).
+          Ignoring $y_0$, the two sequences are <strong>strictly identical</strong>!
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="app-footer">
+    <div class="footer-container">
+      <p><strong>Mealy to Moore Machine Converter Studio</strong> • Formal Language & Automata Suite</p>
+      <p>Clean HTML5, CSS3, & Vanilla JavaScript • Interactive Vector State Diagrams • Offline Ready</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
